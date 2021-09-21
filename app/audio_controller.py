@@ -90,7 +90,11 @@ class AudioController(object):
         self.bot.loop.create_task(play_next)
 
     async def play_song(self, song):
-        if song.title.info == None:
+        if song.info.title == None:
+            if song.host == link_utils.Sites.Spotify:
+                conversion = self.search_youtube(await link_utils.convert_spotify(song.info.webpage_url))
+                song.info.webpage_url = conversion
+
             downloader = youtube_dl.YoutubeDL(YTDL_Config)
             song_request = downloader.extract_info(song.info.webpage_url, download=False)
 
@@ -103,15 +107,13 @@ class AudioController(object):
 
         self.playlist.add_name(song.info.title)
         self.current_song = song
-
         self.playlist.history.append(self.current_song)
 
-        self.voice_client.play(discord.FFmpegAudio(
+        self.voice_client.play(discord.FFmpegPCMAudio(
             song.base_url,
             before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'),
             after=lambda e: self.next_song(e)
         )
-
         self.voice_client.source = discord.PCMVolumeTransformer(self.guild.voice_client.source)
         self.voice_client.source.volume = float(self.volume) / 100.0
 
@@ -147,7 +149,7 @@ class AudioController(object):
         if host == link_utils.Sites.Spotify:
             title = await link_utils.convert_spotify(track)
             track = self.search_youtube(track)
-        
+
         if host == link_utils.Sites.YouTube:
             track = track.split('&list=')[0]
 
@@ -164,8 +166,8 @@ class AudioController(object):
             thumbnail = None
 
         song = Song(
-            link_utils.Origins.Default,
-            host,
+            host=host,
+            origin=link_utils.Origins.Default,
             base_url=song_request.get('url'),
             uploader=song_request.get('uploader'),
             title=song_request.get('title'),
@@ -177,11 +179,10 @@ class AudioController(object):
         self.playlist.add(song)
 
         if self.current_song == None:
-            print('Tocando: {}'.format(track))
             await self.play_song(song)
-        
+
         return song
-    
+
     async def process_playlist(self, playlist_type, url):
 
         if playlist_type == link_utils.Playlist_Types.YouTube_Playlist:
