@@ -1,0 +1,7 @@
+youtube_dl==2021.6.6
+psutil==5.8.0
+discord.py==1.7.3
+aiohttp==3.7.4.post0
+beautifulsoup4==4.10.0
+discord==1.7.3
+python-dotenv==0.19.0
