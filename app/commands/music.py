@@ -38,13 +38,12 @@ class Music(commands.Cog):
         if audiocontroller.playlist.loop == True:
             await ctx.send(f'Loop ativado! Use {BOT_PREFIX}loop para desativar')
             return
-        
-        song = await audiocontroller.process_song(track)
 
+        song = await audiocontroller.process_song(track)
+        
         if song is None:
             await ctx.send(SONGINFO_UNKNOWN_SITE)
             return
-        
         if song.origin == link_utils.Origins.Default:
             if audiocontroller.current_song != None and len(audiocontroller.playlist.queue) == 0:
                 await ctx.send(embed=song.info.format_output(SONGINFO_NOW_PLAYING))
@@ -108,7 +107,7 @@ class Music(commands.Cog):
             return
         
         guild.voice_client.pause()
-        await ctx.send('Pausado :pause_button')
+        await ctx.send('Pausado :pause_button:')
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
@@ -123,7 +122,7 @@ class Music(commands.Cog):
             await ctx.send("A fila está vazia :x:")
             return
 
-        playlist = music_utils.guild_to_audiocontroller[guild].playlist
+        playlist = utils.guild_to_audiocontroller[guild].playlist
 
         # Embeds are limited to 25 fields
         if MAX_SONG_PRELOAD > 25:
@@ -156,7 +155,7 @@ class Music(commands.Cog):
         audiocontroller = utils.guild_to_audiocontroller[guild]
         audiocontroller.playlist.loop = False
 
-        await music_utils.guild_to_audiocontroller[guild].stop_player()
+        await utils.guild_to_audiocontroller[guild].stop_player()
         await ctx.send('Parando todas as sessões :octagonal_sign:')
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
@@ -207,7 +206,7 @@ class Music(commands.Cog):
         audiocontroller.timer.cancel()
         audiocontroller.timer = music_utils.Timer(audiocontroller.timeout_handler)
 
-        await music_utils.guild_to_audiocontroller[guild].prev_song()
+        await utils.guild_to_audiocontroller[guild].prev_song()
         await ctx.send("Tocando a música anterior :track_previous:")
     
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
@@ -231,7 +230,7 @@ class Music(commands.Cog):
         if await music_utils.play_check(ctx) == False:
             return
         
-        song = music_utils.guild_to_audiocontroller[guild].current_song
+        song = utils.guild_to_audiocontroller[guild].current_song
 
         if song is None:
             return
@@ -247,7 +246,7 @@ class Music(commands.Cog):
         if await music_utils.play_check(ctx) == False:
             return
         
-        await ctx.send(music_utils.guild_to_audiocontroller[guild].track_history())
+        await ctx.send(utils.guild_to_audiocontroller[guild].track_history())
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
@@ -256,7 +255,7 @@ class Music(commands.Cog):
         guild = utils.get_guild(self.bot, ctx.message)
         
         if len(args) == 0:
-            await ctx.send('Volume atual: {} :speaker:'.format(music_utils.guild_to_audiocontroller[guild]._volume))
+            await ctx.send('Volume atual: {} :speaker:'.format(utils.guild_to_audiocontroller[guild]._volume))
             return
         
         try:
@@ -266,12 +265,12 @@ class Music(commands.Cog):
             if volume > 100:
                 raise Exception('')
             
-            if music_utils.guild_to_audiocontroller[guild]._volume >= volume:
+            if utils.guild_to_audiocontroller[guild]._volume >= volume:
                 await ctx.send('Volume diminuido para {}% :sound:'.format(str(volume)))
             else:
                 await ctx.send('Volume aumentado para {}% :loud_sound:'.format(str(volume)))
             
-            music_utils.guild_to_audiocontroller[guild].volume = volume
+            utils.guild_to_audiocontroller[guild].volume = volume
         except:
             await ctx.send('O volume deve ser um valor entre 1 e 100')
         
