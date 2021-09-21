@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 from config import *
 import datetime
 
@@ -9,8 +8,7 @@ class Song():
         self.host = host
         self.origin = origin
         self.base_url = base_url
-        self.info = self.SongInfo(uploader, title, duration,
-                               webpage_url, thumbnail)
+        self.info = self.SongInfo(uploader, title, duration, webpage_url, thumbnail)
 
     class SongInfo:
         def __init__(self, uploader, title, duration, webpage_url, thumbnail):
@@ -19,7 +17,6 @@ class Song():
             self.duration = duration
             self.webpage_url = webpage_url
             self.thumbnail = thumbnail
-            self.output = ""
 
         def format_output(self, playtype):
 
