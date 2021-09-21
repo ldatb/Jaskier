@@ -6,6 +6,13 @@ import subprocess
 import tempfile
 
 
+# A dictionary that remembers which guild belongs to which audiocontroller
+guild_to_audiocontroller = {}
+
+# A dictionary that remembers which settings belongs to which guild
+guild_to_settings = {}
+
+
 def is_valid_url(url):
     """
         Taken from django URL validator
@@ -140,3 +147,12 @@ def create_tempfile(data):
     file = fp.read()
     fp.close()
     return file
+
+def get_guild(bot, command):
+    if command.guild is not None:
+        return command.guild
+    for guild in bot.guilds:
+        for channel in guild.voice_channels:
+            if command.author in channel.members:
+                return guild
+    return None
