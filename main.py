@@ -47,6 +47,7 @@ async def on_ready():
         print(f'Uniu-se a: {guild.name}')
 
     print(STARTUP_COMPLETE_MESSAGE)
+    print(f'{bot.user.name} is online! ID: {bot.user.id}')
 
 @bot.event
 async def on_guild_join(guild):
