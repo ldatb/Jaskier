@@ -3,34 +3,85 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-load_dotenv()
+from config import *
 
 ## App imports
-from app.extras import Extras
-from app.music import MusicPlayer
+from app.settings import Settings
+from app.utils import guild_to_audiocontroller, guild_to_settings
+from app.audio_controller import AudioController
 from app.static import COMMANDS
 
-## Get Discord API Token
+## Command imports
+from app.commands.general import General
+from app.commands.music import Music
+
+load_dotenv()
+
+
+## Discord API config
 DESCRIPTION = 'Toss a coin to your witcher'
 INTENTS = discord.Intents.all()
-PREFIX = "j!"
+PREFIX = BOT_PREFIX
 TOKEN = os.getenv("DISCORD_TOKEN")
 bot = commands.Bot(
         command_prefix=commands.when_mentioned_or(PREFIX),
         description=DESCRIPTION,
         Intents=INTENTS,
-        help_command=None
+        help_command=None,
+        case_insensitive=True
 )
+
 
 ## Events
 @bot.event
 async def on_ready():
-    print(f'{bot.user.name} has connected.')
+    print(STARTUP_MESSAGE)
+
     await bot.change_presence(activity = discord.Activity(
         type=discord.ActivityType.listening,
         name=f'{PREFIX}help'
     ))
 
+    for guild in bot.guilds:
+        await register(guild)
+        print(f'Uniu-se a: {guild.name}')
+
+    print(STARTUP_COMPLETE_MESSAGE)
+
+@bot.event
+async def on_guild_join(guild):
+    print(f'Uniu-se a: {guild.name}')
+    await register(guild)
+
+async def register(guild):
+    guild_to_settings[guild] = Settings(guild)
+    guild_to_audiocontroller[guild] = AudioController(bot, guild)
+
+    sett = guild_to_settings[guild]
+
+    await guild.me.edit(nick=sett.get('default_nickname'))
+
+    if GLOBAL_DISABLE_AUTOJOIN_VC == True:
+        return
+    
+    voice_channels = guild.voice_channels
+
+    if sett.get('vc_timeout') == False:
+        if sett.get('start_voice_channel') == None:
+            try:
+                await guild_to_audiocontroller[guild].connect_to_voice_channel(guild.voice_channels[0])
+            except Exception as e:
+                print(e)
+        else:
+            for vc in voice_channels:
+                if vc.id == sett.get('start_voice_channel'):
+                    try:
+                        await guild_to_audiocontroller[guild].connect_to_voice_channel(voice_channels[voice_channels.index(vc)])
+                    except Exception as e:
+                        print(e)
+
+
+## General commands
 @bot.command('help')
 async def _help(ctx):
     """List of commands"""
@@ -70,7 +121,8 @@ async def on_command_error(ctx, error):
     await ctx.send(str(error))
     raise error
 
+
 ## Add cogs and run bot
-bot.add_cog(Extras(bot, PREFIX))
-bot.add_cog(MusicPlayer(bot, PREFIX))
+bot.add_cog(General(bot, PREFIX))
+bot.add_cog(Music(bot, PREFIX))
 bot.run(TOKEN)
