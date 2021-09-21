@@ -1,4 +1,5 @@
 # Jaskier
-A simple music discord bot
+A simple portuguese music discord bot
 
-#### Reference: https://github.com/AdiFahmi/radio-id-bot
+## Installation
+Simply run 'pip install -r requirements.txt' to install the necessary requirements and 'python main.py' to run the bot.
