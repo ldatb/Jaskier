@@ -39,18 +39,24 @@ async def is_connected(ctx):
         return None
 
 async def play_check(ctx):
-    sett = guild_to_settings[ctx.guild]
-    vc_rule = sett.get('user_must_be_in_vc')
+    author_voice = ctx.message.author.voice
+    if author_voice == None:
+        await ctx.send(USER_NOT_IN_VC_MESSAGE)
+        return False
+    else:
+        return True
 
-    if vc_rule == True:
-        author_voice = ctx.message.author.voice
-        bot_vc = ctx.guild.voice_client.channel
-        if author_voice == None:
-            await ctx.send(USER_NOT_IN_VC_MESSAGE)
-            return False
-        elif ctx.message.author.voice.channel != bot_vc:
-            await ctx.send(USER_NOT_IN_VC_MESSAGE)
-            return False
+async def check_channel(ctx):
+    author_voice = ctx.message.author.voice.channel
+    voice_channel = ctx.guild.voice_client.channel
+
+    if not voice_channel:
+        return True
+    elif author_voice != voice_channel:
+        await ctx.send(DIFFERENT_VOICE_CHANNEL)
+        return False
+    else:
+        return True
 
 class Timer:
     def __init__(self, callback):
