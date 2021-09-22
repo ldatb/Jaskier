@@ -75,17 +75,17 @@ class AudioController(object):
             history += '\n' + trackname
         return history
     
-    def next_song(self, error):
+    def next_song(self):
         """
         Invoked after a song is finished. Plays the next song if there is one.
         """
 
         next_song = self.playlist.next(self.current_song)
         self.current_song = None
-        
+
         if next_song is None:
             return
-        
+
         play_next = self.play_song(next_song)
         self.bot.loop.create_task(play_next)
 
@@ -112,7 +112,7 @@ class AudioController(object):
         self.voice_client.play(discord.FFmpegPCMAudio(
             song.base_url,
             before_options='-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'),
-            after=lambda e: self.next_song(e)
+            after=lambda e: self.next_song()
         )
         self.voice_client.source = discord.PCMVolumeTransformer(self.guild.voice_client.source)
         self.voice_client.source.volume = float(self.volume) / 100.0
@@ -135,20 +135,18 @@ class AudioController(object):
 
             if self.current_song == None:
                 await self.play_song(self.playlist.queue[0])
-                print('Tocando: {}'.format(track))
 
             song = Song(link_utils.Origins.Playlist, link_utils.Sites.Unknown)
             return song
-        
+
         if host == link_utils.Sites.Unknown:
             if link_utils.get_url(track) is not None:
                 return None
-            
             track =  self.search_youtube(track)
-        
+
         if host == link_utils.Sites.Spotify:
             title = await link_utils.convert_spotify(track)
-            track = self.search_youtube(track)
+            track = self.search_youtube(title)
 
         if host == link_utils.Sites.YouTube:
             track = track.split('&list=')[0]
@@ -196,9 +194,9 @@ class AudioController(object):
 
             with youtube_dl.YoutubeDL(YTDL_Config) as ydl:
                 playlist_request = ydl.extract_info(url, download=False)
-
+                
                 for entry in playlist_request['entries']:
-
+                        
                     link = "https://www.youtube.com/watch?v={}".format(
                         entry['id'])
 
@@ -207,7 +205,6 @@ class AudioController(object):
                         link_utils.Sites.YouTube,
                         webpage_url=link
                     )
-
                     self.playlist.add(song)
 
         if playlist_type == link_utils.Playlist_Types.Spotify_Playlist:
