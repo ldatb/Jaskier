@@ -13,6 +13,7 @@ NOT_CONNECTED_MESSAGE = "Erro: O Bot não está conectado a nenhum canal de voz"
 CHANNEL_NOT_FOUND_MESSAGE = "Erro: Canal não encontrado"
 DEFAULT_CHANNEL_JOIN_FAILED = "Erro: Não foi possível entrar no canal"
 ALREADY_CONNECTED_MESSAGE = "Erro: O Bot já está conectado a um canal de voz"
+DIFFERENT_VOICE_CHANNEL = "Você precisa estar no mesmo canal de voz do bot para usar esse comando."
 
 INFO_HISTORY_TITLE = "Músicas tocadas:"
 MAX_HISTORY_LENGTH = 10
@@ -33,7 +34,7 @@ SONGINFO_NOW_PLAYING = "Tocando"
 SONGINFO_QUEUE_ADDED = "Adicionado à fila"
 SONGINFO_SONGINFO = "Informações da música:"
 SONGINFO_UNKNOWN_SITE = "Link desconhecido :question:"
-SONGINFO_PLAYLIST_QUEUED = "Fila: :page_with_curl:"
+SONGINFO_PLAYLIST_QUEUED = "Playlist adicionada :white_check_mark:"
 SONGINFO_UNKNOWN_DURATION = "Desconhecido"
 
 ABSOLUTE_PATH = '' #do not modify
