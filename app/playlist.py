@@ -28,9 +28,7 @@ class Playlist:
         if len(self.queue) == 0:
             return None
 
-        if song_played != 'Dummy':
-            if len(self.history) > MAX_HISTORY_LENGTH:
-                self.history.popleft()
+        return self.queue[0]
     
     def prev(self, current_song):
         if current_song == None:
