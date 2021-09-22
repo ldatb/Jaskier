@@ -31,6 +31,9 @@ class Music(commands.Cog):
         if await music_utils.play_check(ctx) == False:
             return
         
+        if await music_utils.check_channel(ctx) == False:
+            return
+        
         # Reset timer
         audiocontroller.timer.cancel()
         audiocontroller.timer = music_utils.Timer(audiocontroller.timeout_handler)
@@ -55,52 +58,14 @@ class Music(commands.Cog):
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='loop', aliases=['l'])
-    async def _loop(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-        audiocontroller = utils.guild_to_audiocontroller[guild]
-
-        if await music_utils.play_check(ctx) == False:
-            return
-        
-        if len(audiocontroller.playlist.queue) < 1 and guild.voice_client.is_playing() == False:
-            await ctx.send('Não há nenhuma música na fila!')
-            return
-        
-        if audiocontroller.playlist.loop == False:
-            audiocontroller.playlist.loop = True
-            await ctx.send('Loop ativado! :arrows_counterclockwise:')
-        else:
-            audiocontroller.playlist.loop = False
-            await ctx.send('Loop desativado! :x:')
-
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
-    @commands.command(name='shuffle', aliases=['s', 'sh', 'embaralhar'])
-    async def _shuffle(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-        audiocontroller = utils.guild_to_audiocontroller[guild]
-
-        if await music_utils.play_check(ctx) == False:
-            return
-
-        if guild.voice_client is None or not guild.voice_client.is_playing():
-            await ctx.send('A fila está vazia :x:')
-            return
-        
-        audiocontroller.playlist.shuffle()
-        await ctx.send('Playlist embaralhada! :twisted_rightwards_arrows:')
-
-        for song in list(audiocontroller.playlist.queue)[:MAX_SONG_PRELOAD]:
-            asyncio.ensure_future(audiocontroller.preload(song))
-
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
     @commands.command(name='pause', aliases=['pausar'])
     async def _pause(self, ctx):
         guild = utils.get_guild(self.bot, ctx.message)
         
         if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
             return
         
         if guild.voice_client is None or not guild.voice_client.is_playing():
@@ -108,6 +73,86 @@ class Music(commands.Cog):
         
         guild.voice_client.pause()
         await ctx.send('Pausado :pause_button:')
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='resume', aliases=['retomar'])
+    async def _resume(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+
+        if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
+
+        guild.voice_client.resume()
+        await ctx.send("Voltando a tocar :arrow_forward:")
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='stop', aliases=['st', 'parar'])
+    async def _stop(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+
+        if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
+
+        audiocontroller = utils.guild_to_audiocontroller[guild]
+        audiocontroller.playlist.loop = False
+
+        await utils.guild_to_audiocontroller[guild].stop_player()
+        await ctx.send('Parando todas as sessões :octagonal_sign:')
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='skip', aliases=['sk', 'pular', 'proxima', 'próxima'])
+    async def _skip(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+
+        if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
+
+        audiocontroller = utils.guild_to_audiocontroller[guild]
+
+        next_song = audiocontroller.playlist.next(audiocontroller.current_song)
+
+        audiocontroller.playlist.loop = False
+        audiocontroller.timer.cancel()
+        audiocontroller.timer = music_utils.Timer(await audiocontroller.timeout_handler())
+
+        if guild.voice_client is None or (not guild.voice_client.is_paused() and not guild.voice_client.is_playing()):
+            return
+        
+        guild.voice_client.stop()
+        await ctx.send('Pulando a música atual :fast_forward:')
+        await ctx.send(embed=next_song.info.format_output(SONGINFO_NOW_PLAYING))
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='prev', aliases=['back', 'anterior'])
+    async def _prev(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+
+        if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
+
+        audiocontroller = utils.guild_to_audiocontroller[guild]
+        audiocontroller.playlist.loop = False
+        audiocontroller.timer.cancel()
+        audiocontroller.timer = music_utils.Timer(audiocontroller.timeout_handler)
+
+        await utils.guild_to_audiocontroller[guild].prev_song()
+        await ctx.send("Tocando a música anterior :track_previous:")
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
@@ -145,37 +190,15 @@ class Music(commands.Cog):
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='stop', aliases=['st', 'parar'])
-    async def _stop(self, ctx):
+    @commands.command(name='history', aliases=['historico'])
+    async def _history(self, ctx):
         guild = utils.get_guild(self.bot, ctx.message)
 
         if await music_utils.play_check(ctx) == False:
-            return
-
-        audiocontroller = utils.guild_to_audiocontroller[guild]
-        audiocontroller.playlist.loop = False
-
-        await utils.guild_to_audiocontroller[guild].stop_player()
-        await ctx.send('Parando todas as sessões :octagonal_sign:')
-
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
-    @commands.command(name='skip', aliases=['sk', 'pular', 'proxima', 'próxima'])
-    async def _skip(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-
-        if await music_utils.play_check(ctx) == False:
-            return
-
-        audiocontroller = utils.guild_to_audiocontroller[guild]
-        audiocontroller.playlist.loop = False
-
-        if guild.voice_client is None or (not guild.voice_client.is_paused() and not guild.voice_client.is_playing()):
             return
         
-        guild.voice_client.stop()
-        await ctx.send('Pulando a música atual :fast_forward:')
-    
+        await ctx.send(utils.guild_to_audiocontroller[guild].track_history())
+
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
     @commands.command(name='clear', aliases=['cl', 'limpar'])
@@ -185,41 +208,14 @@ class Music(commands.Cog):
         if await music_utils.play_check(ctx) == False:
             return
 
+        if await music_utils.check_channel(ctx) == False:
+            return
+
         audiocontroller = utils.guild_to_audiocontroller[guild]
         audiocontroller.clear_queue()
         audiocontroller.playlist.loop = False
-        guild.voice_client.stop()
         
         await ctx.send('Fila esvaziada :no_entry_sign:')
-    
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
-    @commands.command(name='prev', aliases=['back', 'anterior'])
-    async def _prev(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-
-        if await music_utils.play_check(ctx) == False:
-            return
-
-        audiocontroller = utils.guild_to_audiocontroller[guild]
-        audiocontroller.playlist.loop = False
-        audiocontroller.timer.cancel()
-        audiocontroller.timer = music_utils.Timer(audiocontroller.timeout_handler)
-
-        await utils.guild_to_audiocontroller[guild].prev_song()
-        await ctx.send("Tocando a música anterior :track_previous:")
-    
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
-    @commands.command(name='resume', aliases=['retomar'])
-    async def _resume(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-
-        if await music_utils.play_check(ctx) == False:
-            return
-
-        guild.voice_client.resume()
-        await ctx.send("Voltando a tocar :arrow_forward:")
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
@@ -239,17 +235,6 @@ class Music(commands.Cog):
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='history', aliases=['historico'])
-    async def _history(self, ctx):
-        guild = utils.get_guild(self.bot, ctx.message)
-
-        if await music_utils.play_check(ctx) == False:
-            return
-        
-        await ctx.send(utils.guild_to_audiocontroller[guild].track_history())
-
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
-    @commands.guild_only()
     @commands.command(name='volume', aliases=['vol'])
     async def _volume(self, ctx, *args):
         guild = utils.get_guild(self.bot, ctx.message)
@@ -257,13 +242,17 @@ class Music(commands.Cog):
         if len(args) == 0:
             await ctx.send('Volume atual: {} :speaker:'.format(utils.guild_to_audiocontroller[guild]._volume))
             return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
         
         try:
             volume = args[0]
             volume = int(volume)
 
-            if volume > 100:
-                raise Exception('')
+            if volume > 100 or volume < 1:
+                await ctx.send('O volume deve ser um valor entre 1 e 100')
+                return
             
             if utils.guild_to_audiocontroller[guild]._volume >= volume:
                 await ctx.send('Volume diminuido para {}% :sound:'.format(str(volume)))
@@ -271,6 +260,52 @@ class Music(commands.Cog):
                 await ctx.send('Volume aumentado para {}% :loud_sound:'.format(str(volume)))
             
             utils.guild_to_audiocontroller[guild].volume = volume
-        except:
-            await ctx.send('O volume deve ser um valor entre 1 e 100')
+        except Exception as e:
+            None
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='loop', aliases=['l'])
+    async def _loop(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+        audiocontroller = utils.guild_to_audiocontroller[guild]
+
+        if await music_utils.play_check(ctx) == False:
+            return
+
+        if await music_utils.check_channel(ctx) == False:
+            return
         
+        if len(audiocontroller.playlist.queue) < 1 and guild.voice_client.is_playing() == False:
+            await ctx.send('Não há nenhuma música na fila!')
+            return
+        
+        if audiocontroller.playlist.loop == False:
+            audiocontroller.playlist.loop = True
+            await ctx.send('Loop ativado! :arrows_counterclockwise:')
+        else:
+            audiocontroller.playlist.loop = False
+            await ctx.send('Loop desativado! :x:')
+
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
+    @commands.guild_only()
+    @commands.command(name='shuffle', aliases=['s', 'sh', 'embaralhar'])
+    async def _shuffle(self, ctx):
+        guild = utils.get_guild(self.bot, ctx.message)
+        audiocontroller = utils.guild_to_audiocontroller[guild]
+
+        if await music_utils.play_check(ctx) == False:
+            return
+        
+        if await music_utils.check_channel(ctx) == False:
+            return
+
+        if guild.voice_client is None or not guild.voice_client.is_playing():
+            await ctx.send('A fila está vazia :x:')
+            return
+        
+        audiocontroller.playlist.shuffle()
+        await ctx.send('Playlist embaralhada! :twisted_rightwards_arrows:')
+
+        for song in list(audiocontroller.playlist.queue)[:MAX_SONG_PRELOAD]:
+            asyncio.ensure_future(audiocontroller.preload(song))
