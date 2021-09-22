@@ -77,4 +77,4 @@ venv*
 
 # Custom
 *.env
-app/generated/settings.json
+app/settings.json
