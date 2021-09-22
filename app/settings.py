@@ -15,11 +15,8 @@ class Settings():
         self.settings_template = {
             "id": 0,
             "default_nickname": "",
-            "command_channel": None,
-            "start_voice_channel": None,
-            "user_must_be_in_vc": True,
             "button_emote": "",
-            "default_volume": 70,
+            "default_volume": 100,
             "vc_timeout": VC_TIMEOUT_DEFAULT
         }
 
@@ -92,33 +89,6 @@ class Settings():
                 embed.add_field(name=key, value="Not Set", inline=False)
                 continue
 
-            elif key == "start_voice_channel":
-                if self.config.get(key) != None:
-                    found = False
-                    for vc in self.guild.voice_channels:
-                        if vc.id == self.config.get(key):
-                            embed.add_field(
-                                name=key, value=vc.name, inline=False)
-                            found = True
-                    if found == False:
-                        embed.add_field(
-                            name=key, value="Invalid VChannel", inline=False)
-
-                    continue
-
-            elif key == "command_channel":
-                if self.config.get(key) != None:
-                    found = False
-                    for chan in self.guild.text_channels:
-                        if chan.id == self.config.get(key):
-                            embed.add_field(
-                                name=key, value=chan.name, inline=False)
-                            found = True
-                    if found == False:
-                        embed.add_field(
-                            name=key, value="Invalid Channel", inline=False)
-                    continue
-
             embed.add_field(name=key, value=self.config.get(key), inline=False)
 
         return embed
@@ -127,9 +97,6 @@ class Settings():
 
         switcher = {
             'default_nickname': lambda: self.default_nickname(setting, value, ctx),
-            'command_channel': lambda: self.command_channel(setting, value, ctx),
-            'start_voice_channel': lambda: self.start_voice_channel(setting, value, ctx),
-            'user_must_be_in_vc': lambda: self.user_must_be_in_vc(setting, value, ctx),
             'button_emote': lambda: self.button_emote(setting, value, ctx),
             'default_volume': lambda: self.default_volume(setting, value, ctx),
             'vc_timeout': lambda: self.vc_timeout(setting, value, ctx),
@@ -159,46 +126,6 @@ class Settings():
         else:
             self.config[setting] = value
             await self.guild.me.edit(nick=value)
-
-    async def command_channel(self, setting, value, ctx):
-
-        if value.lower() == "unset":
-            self.config[setting] = None
-            return
-
-        found = False
-        for chan in self.guild.text_channels:
-            if chan.name.lower() == value.lower():
-                self.config[setting] = chan.id
-                found = True
-        if found == False:
-            await ctx.send("`Error: Channel name not found`\nUsage: {}set {} channelname\nOther options: unset".format(BOT_PREFIX, setting))
-            return False
-
-    async def start_voice_channel(self, setting, value, ctx):
-
-        if value.lower() == "unset":
-            self.config[setting] = None
-            return
-
-        found = False
-        for vc in self.guild.voice_channels:
-            if vc.name.lower() == value.lower():
-                self.config[setting] = vc.id
-                self.config['vc_timeout'] = False
-                found = True
-        if found == False:
-            await ctx.send("`Error: Voice channel name not found`\nUsage: {}set {} vchannelname\nOther options: unset".format(BOT_PREFIX, setting))
-            return False
-
-    async def user_must_be_in_vc(self, setting, value, ctx):
-        if value.lower() == "true":
-            self.config[setting] = True
-        elif value.lower() == "false":
-            self.config[setting] = False
-        else:
-            await ctx.send("`Error: Value must be True/False`\nUsage: {}set {} True/False".format(BOT_PREFIX, setting))
-            return False
 
     async def button_emote(self, setting, value, ctx):
 
