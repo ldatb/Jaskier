@@ -1,6 +1,8 @@
 BOT_PREFIX = "j."
 EMBED_COLOR = 0xf0e130
 
+AUTHOR_DISCORD_NAME = 'giyu#3053'
+
 SUPPORTED_EXTENSIONS = ('.webm', '.mp4', '.mp3', '.avi', '.wav', '.m4v', '.ogg', '.mov')
 
 GLOBAL_DISABLE_AUTOJOIN_VC = False
@@ -19,7 +21,7 @@ INFO_HISTORY_TITLE = "Músicas tocadas:"
 MAX_HISTORY_LENGTH = 10
 MAX_TRACKNAME_HISTORY_LENGTH = 15
 
-MAX_SONG_PRELOAD = 7  #maximum of 25
+MAX_SONG_PRELOAD = 10  #maximum of 25
 
 VC_TIMEOUT = 600 #seconds
 VC_TIMEOUT_DEFAULT = True
