@@ -1,3 +1,5 @@
+from config import *
+
 # PERSONAL DATAS
 AUTHOR_NAME = "Giyu"
 AUTHOR_TWITTER_URL = "https://twitter.com/giyuu__"
@@ -9,11 +11,21 @@ BOT_GITHUB_URL = "https://github.com/lucasataides/Jaskier"
 BOT_INVITE_LINK = "https://discord.com/oauth2/authorize?client_id=888111878126043156&scope=bot&permissions=6479662400"
 
 COMMANDS = {
+    "play [link ou busca]": "Toca uma música",
+    "pause": "Pausa a música atual",
+    "resume": "Volta a tocar a música atual",
+    "stop": "Para a sessão",
+    "skip": "Pula a música atual",
+    "prev": "Toca a música anterior",
+    "queue": f"Mostra as próximas {MAX_SONG_PRELOAD} músicas",
+    "history": "Mostra as músicas que já foram tocadas nessa sessão",
+    "clear": "Esvazia a fila",
+    "songinfo": "Mostra informações sobre a música atual",
+    "volume <valor de 0 a 100>": "Mostra o volume atual ou altera-o",
+    "loopsong": "Ativa / desativa o loop da música atual",
+    "shuffle": "Embaralha a fila atual",
+    "ping": "Latência do bot",
     "help": "Mostra os comandos disponíveis",
-    "join": "Entra em um canal de voz",
-    "play": "Toca uma música",
-    "stop": "Para a música",
-    "playing": "Mostra detalhes da música atual",
-    "leave": "Sai do canal de voz",
-    "ping": "Latência do bot"
+    "info": "Informações sobre a máquina",
+    "invite": "Como botar o Jaskier no seu servidor"
 }
