@@ -69,25 +69,6 @@ class AudioController(object):
     async def connect_to_voice_channel(self, channel):
         self.voice_client = await channel.connect(reconnect=True, timeout=10.0)
 
-    def track_history(self):
-        history = INFO_HISTORY_TITLE
-        for trackname in self.playlist.trackname_history:
-            history += '\n' + trackname
-        return history
-    
-    def next_song(self):
-        """
-        Invoked after a song is finished. Plays the next song if there is one.
-        """
-
-        next_song = self.playlist.next(self.current_song)
-        self.current_song = None
-
-        if next_song is None:
-            return
-
-        play_next = self.play_song(next_song)
-        self.bot.loop.create_task(play_next)
 
     async def play_song(self, song):
         if song.info.title == None:
@@ -182,7 +163,6 @@ class AudioController(object):
         return song
 
     async def process_playlist(self, playlist_type, url):
-
         if playlist_type == link_utils.Playlist_Types.YouTube_Playlist:
 
             if ("playlist?list=" in url):
@@ -196,10 +176,10 @@ class AudioController(object):
                 playlist_request = ydl.extract_info(url, download=False)
                 
                 for entry in playlist_request['entries']:
-                        
+                    
                     link = "https://www.youtube.com/watch?v={}".format(
                         entry['id'])
-
+                        
                     song = Song(
                         link_utils.Origins.Playlist,
                         link_utils.Sites.YouTube,
@@ -215,7 +195,6 @@ class AudioController(object):
                     link_utils.Sites.Spotify,
                     webpage_url=link
                 )
-                
                 self.playlist.add(song)
 
         if playlist_type == link_utils.Playlist_Types.BandCamp_Playlist:
@@ -239,8 +218,8 @@ class AudioController(object):
                     self.playlist.add(song)
 
         for song in list(self.playlist.queue)[:MAX_SONG_PRELOAD]:
-            asyncio.ensure_future(self.preload(song))
-
+            await asyncio.ensure_future(self.preload(song))
+ 
     async def preload(self, song):
         if song.info.title != None:
             return
@@ -296,6 +275,20 @@ class AudioController(object):
         self.playlist.queue.clear()
         self.guild.voice_client.stop()
 
+    def next_song(self):
+        """
+        Invoked after a song is finished. Plays the next song if there is one.
+        """
+
+        next_song = self.playlist.next(self.current_song)
+        self.current_song = None
+
+        if next_song is None:
+            return
+
+        play_next = self.play_song(next_song)
+        self.bot.loop.create_task(play_next)
+
     async def prev_song(self):
         """
         Loads the last song from the history into the queue and starts it
@@ -307,15 +300,25 @@ class AudioController(object):
         prev_song = self.playlist.prev(self.current_song)
 
         if not self.guild.voice_client.is_playing() and not self.guild.voice_client.is_paused():
-            if prev_song == "Dummy":
-                self.playlist.next(self.current_song)
-                return None
             await self.play_song(prev_song)
         else:
             self.guild.voice_client.stop()
 
+    def track_history(self):
+        history = INFO_HISTORY_TITLE
+        for trackname in self.playlist.trackname_history:
+            history += '\n' + trackname
+        return history
+
     def clear_queue(self):
         self.playlist.queue.clear()
+
+    def check_playlist(self, url):
+        check = link_utils.identify_playlist(url)
+        if check == link_utils.Playlist_Types.Unknown:
+            return False
+        else:
+            return True
 
     async def timeout_handler(self):
         if len(self.guild.voice_client.channel.voice_states) == 1:
@@ -351,3 +354,6 @@ class AudioController(object):
     async def uDisconnect(self):
         await self.stop_player()
         await self.guild.voice_client.disconnect(force=True)
+
+    async def loop_queue(self):
+        self.playlist.loop_queue = self.playlist.queue
