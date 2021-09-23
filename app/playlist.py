@@ -6,9 +6,11 @@ from random import shuffle
 class Playlist:
     def __init__(self):
         self.queue = deque()
+        self.loop_queue = deque()
         self.history = deque()
         self.trackname_history = deque()
         self.loop = False
+        self.loop_song = False
 
     def __len__(self):
         return len(self.queue)
@@ -21,7 +23,7 @@ class Playlist:
     def add(self, track):
         self.queue.append(track)
     
-    def next(self, song_played):
+    def next(self, current_song):
         if self.loop == True:
            self.queue.appendleft(self.history[-1])
 
