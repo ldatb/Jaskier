@@ -42,6 +42,10 @@ class Music(commands.Cog):
             await ctx.send(f'Loop ativado! Use {BOT_PREFIX}loop para desativar')
             return
 
+        is_playlist = audiocontroller.check_playlist(track)
+        if is_playlist == True:
+            await ctx.send('Carregando playlist :gear:')
+        
         song = await audiocontroller.process_song(track)
         
         if song is None:
@@ -76,7 +80,7 @@ class Music(commands.Cog):
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='resume', aliases=['retomar'])
+    @commands.command(name='resume', aliases=['r', 'retomar'])
     async def _resume(self, ctx):
         guild = utils.get_guild(self.bot, ctx.message)
 
@@ -265,7 +269,7 @@ class Music(commands.Cog):
 
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='loop', aliases=['l'])
+    @commands.command(name='loopsong', aliases=['ls'])
     async def _loop(self, ctx):
         guild = utils.get_guild(self.bot, ctx.message)
         audiocontroller = utils.guild_to_audiocontroller[guild]
@@ -286,10 +290,10 @@ class Music(commands.Cog):
         else:
             audiocontroller.playlist.loop = False
             await ctx.send('Loop desativado! :x:')
-
+        
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     @commands.guild_only()
-    @commands.command(name='shuffle', aliases=['s', 'sh', 'embaralhar'])
+    @commands.command(name='shuffle', aliases=['sh', 'embaralhar'])
     async def _shuffle(self, ctx):
         guild = utils.get_guild(self.bot, ctx.message)
         audiocontroller = utils.guild_to_audiocontroller[guild]
@@ -308,4 +312,4 @@ class Music(commands.Cog):
         await ctx.send('Playlist embaralhada! :twisted_rightwards_arrows:')
 
         for song in list(audiocontroller.playlist.queue)[:MAX_SONG_PRELOAD]:
-            asyncio.ensure_future(audiocontroller.preload(song))
+            await asyncio.ensure_future(audiocontroller.preload(song))
