@@ -89,11 +89,12 @@ async def _help(ctx):
     
     embed = discord.Embed(
         title = 'Comandos do Jaskier:',
-        color = 0xf0e130
+        color = EMBED_COLOR
     )
+    embed.set_footer(text='<> opcional | [] obrigatório')
 
     for cmd, msg in COMMANDS.items():
-        embed.add_field(name=f'{PREFIX}{cmd}', value=f'{msg}', inline=False)
+        embed.add_field(name=f'{PREFIX}{cmd}', value=f'{msg}', inline=True)
     
     await ctx.send(embed=embed)
 
