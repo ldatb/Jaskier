@@ -10,7 +10,6 @@ url_regex = re.compile(
 session = aiohttp.ClientSession(
     headers={'User-Agent': 'python-requests/2.20.0'})
 
-
 def clean_sclink(track):
     if track.startswith("https://m."):
         track = track.replace("https://m.", "https://")
@@ -20,7 +19,7 @@ def clean_sclink(track):
 
 
 async def convert_spotify(url):
-
+    """Convert a Spotify playlist to a Youtube playlist"""
     if re.search(url_regex, url):
         result = url_regex.search(url)
         url = result.group(0)
@@ -61,7 +60,6 @@ async def get_spotify_playlist(url):
 
 
 def get_url(content):
-
     regex = re.compile(
         "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
 
