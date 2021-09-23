@@ -1,5 +1,6 @@
-youtube_dl==2021.6.6
 psutil==5.8.0
+youtube_dl==2021.6.6
+distro==1.4.0
 discord.py==1.7.3
 aiohttp==3.7.4.post0
 beautifulsoup4==4.10.0
